@@ -1,12 +1,11 @@
 const Twitter = require('twitter');
 const twilio = require('twilio');
+import TwitterEvent from './twitterEvent';
 
 const twilioCredentials = {
     accountSID: process.env.TWILIO_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN
 };
-
-const twilioClient = twilio(twilioCredentials.accountSID, twilioCredentials.authToken);
 
 const twitterCredentials = {
     consumer_key: process.env.CONSUMER_KEY,
@@ -16,11 +15,11 @@ const twitterCredentials = {
 };
 
 const twitterClient = new Twitter(twitterCredentials);
+const twilioClient = twilio(twilioCredentials.accountSID, twilioCredentials.authToken);
 
-let twitterStream = twitterClient.stream('user');
+const twitterStream = twitterClient.stream('user');
 
 twitterStream.on('data', (event: any) => {
-    console.log(event);
     const twitterEvent = new TwitterEvent(event);
     if (twitterEvent.isValidTweet()) {
         processTweet(twitterEvent);
@@ -30,25 +29,6 @@ twitterStream.on('data', (event: any) => {
 twitterStream.on('error', (error: any) => {
     console.log(error);
 });
-
-class TwitterEvent {
-    public event: any;
-    constructor(event: object) {
-        this.event = event;
-    }
-
-    public isValidTweet() {
-        return this.event.hasOwnProperty('user') && this.event.hasOwnProperty('text');
-    }
-
-    get tweetText(): string {
-        if (this.isValidTweet()) {
-            return this.event.text;
-        } else {
-            return 'Not a tweet';
-        }
-    }
-}
 
 function processTweet(tweet: TwitterEvent) {
     console.log(tweet);
