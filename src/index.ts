@@ -1,6 +1,11 @@
 const Twitter = require('twitter');
 const twilio = require('twilio');
 import TwitterEvent from './twitterEvent';
+import TweetProcessor from './tweetProcessor';
+
+const myConfig = require('config');
+
+const myTweetProcessor = new TweetProcessor(myConfig, sendTwilioMessage);
 
 const twilioCredentials = {
     accountSID: process.env.TWILIO_SID,
@@ -22,7 +27,7 @@ const twitterStream = twitterClient.stream('user');
 twitterStream.on('data', (event: any) => {
     const twitterEvent = new TwitterEvent(event);
     if (twitterEvent.isValidTweet()) {
-        processTweet(twitterEvent);
+        myTweetProcessor.process(twitterEvent);
     }
 });
 
@@ -30,11 +35,10 @@ twitterStream.on('error', (error: any) => {
     console.log(error);
 });
 
-function processTweet(tweet: TwitterEvent) {
-    console.log(tweet);
+function sendTwilioMessage(messageBody: string) {
     twilioClient.messages.create({
         to: process.env.TO_NUMBER,
         from: process.env.TWILIO_NUMBER,
-        body: tweet.tweetText
+        body: messageBody
     });
 }
